@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cartRetrievalSchema } from '@/lib/validations/cart';
-import { MOCK_CARTS, MOCK_ACTIVE_SESSION } from '@/lib/services/mockData';
+import { queueStore } from '@/lib/services/queueStore';
 import { CartRetrievalResponse } from '@/types/api';
 
 export async function GET(
@@ -25,11 +25,9 @@ export async function GET(
       );
     }
 
-    const cart = MOCK_CARTS.find(
-      (c) => c.qr_code.toUpperCase() === validation.data.qr_code.toUpperCase() && c.is_active
-    );
+    const cartResult = queueStore.getCartByQrCode(validation.data.qr_code);
 
-    if (!cart) {
+    if (!cartResult || !cartResult.cart) {
       return NextResponse.json<CartRetrievalResponse>(
         {
           success: false,
@@ -42,17 +40,11 @@ export async function GET(
       );
     }
 
-    // Return cart metadata along with active session if any
-    const activeSession =
-      MOCK_ACTIVE_SESSION.cart_id === cart.id && MOCK_ACTIVE_SESSION.status === 'SHOPPING'
-        ? MOCK_ACTIVE_SESSION
-        : null;
-
     return NextResponse.json<CartRetrievalResponse>({
       success: true,
       data: {
-        cart,
-        active_session: activeSession,
+        cart: cartResult.cart,
+        active_session: cartResult.active_session,
       },
       meta: {
         timestamp: new Date().toISOString(),
