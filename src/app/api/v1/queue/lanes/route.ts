@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { laneWorkloadSchema } from '@/lib/validations/queue';
-import { MOCK_LANES, MOCK_ASSIGNMENT } from '@/lib/services/mockData';
+import { queueStore } from '@/lib/services/queueStore';
 import { LaneWorkloadResponse } from '@/types/api';
 
 export async function GET(request: NextRequest) {
@@ -23,15 +23,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const lanesWithWorkload = MOCK_LANES.map((lane) => ({
-      ...lane,
-      queue_count: lane.current_queue_count || 0,
-      estimated_wait_seconds: lane.estimated_wait_seconds || 0,
-      serving_token: lane.id === MOCK_ASSIGNMENT.lane_id ? MOCK_ASSIGNMENT.token_number : null,
+    const rawLanes = queueStore.getLanes();
+
+    const lanesWithWorkload = rawLanes.map((l) => ({
+      ...l,
+      queue_count: l.current_queue_count ?? (l.queued_carts?.length || 0),
+      estimated_wait_seconds: l.estimated_wait_seconds || 0,
+      serving_token: l.serving_token || null,
     }));
 
     const totalActiveLanes = lanesWithWorkload.filter((l) => l.status === 'OPEN').length;
-    const totalWaitingCustomers = lanesWithWorkload.reduce((sum, l) => sum + l.queue_count, 0);
+    const totalWaitingCustomers = lanesWithWorkload.reduce(
+      (sum, l) => sum + l.queue_count,
+      0
+    );
 
     return NextResponse.json<LaneWorkloadResponse>({
       success: true,

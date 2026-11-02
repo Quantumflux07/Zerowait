@@ -96,7 +96,7 @@ export default function RootPage() {
                 <div className="w-12 h-12 rounded-2xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#4DB3E6]">
                   <Users className="w-6 h-6 stroke-[2.2]" />
                 </div>
-                <Badge variant="blue">Branch: queue_engine</Badge>
+                <Badge variant="green" dot>Active Station</Badge>
               </div>
 
               <h2 className="text-xl font-bold text-[#0F2A43] mb-2">
@@ -125,16 +125,16 @@ export default function RootPage() {
             </div>
 
             <div className="pt-2">
-              <Button
-                variant="primary"
-                size="md"
-                fullWidth
-                disabled
-                className="opacity-90 cursor-default"
-                icon={<ArrowRight className="w-4 h-4" />}
-              >
-                Managed in queue_engine branch
-              </Button>
+              <Link href="/queue" className="block w-full">
+                <Button
+                  variant="primary"
+                  size="md"
+                  fullWidth
+                  icon={<ArrowRight className="w-4 h-4" />}
+                >
+                  Launch Queue Engine Station
+                </Button>
+              </Link>
             </div>
           </Card>
         </div>

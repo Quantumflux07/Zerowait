@@ -1,4 +1,4 @@
-import { Product, Cart, CartSession, Lane, LaneAssignment } from '@/types/domain';
+import type { Product, Cart, CartSession, Lane, LaneAssignment } from '../../types/domain.ts';
 
 export const MOCK_STORE_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 
