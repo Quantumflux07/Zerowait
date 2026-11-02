@@ -795,6 +795,43 @@ class QueueStore {
       this.assignments.delete(sessionId);
     }
   }
+
+  /**
+   * Returns the live session object by session ID.
+   * Used by cart API routes to fetch stateful session instead of static mock.
+   */
+  public getSessionById(sessionId: string): CartSession | undefined {
+    return this.sessions.get(sessionId);
+  }
+
+  /**
+   * Atomically updates a session's items array and financial summary.
+   * Used after barcode scan or item quantity change.
+   */
+  public updateSessionItems(
+    sessionId: string,
+    items: CartItem[],
+    summary: {
+      total_items: number;
+      subtotal_paise: number;
+      tax_paise: number;
+      discount_paise: number;
+      grand_total_paise: number;
+    }
+  ): CartSession | undefined {
+    const session = this.sessions.get(sessionId);
+    if (!session) return undefined;
+
+    session.items = items;
+    session.total_items = summary.total_items;
+    session.subtotal_paise = summary.subtotal_paise;
+    session.tax_paise = summary.tax_paise;
+    session.discount_paise = summary.discount_paise;
+    session.grand_total_paise = summary.grand_total_paise;
+    session.updated_at = new Date().toISOString();
+
+    return { ...session };
+  }
 }
 
 // Global Singleton in NodeJS process to ensure shared state across API routes

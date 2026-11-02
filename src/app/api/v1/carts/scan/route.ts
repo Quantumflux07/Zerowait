@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { scanProductSchema } from '@/lib/validations/cart';
-import { MOCK_PRODUCTS, MOCK_ACTIVE_SESSION } from '@/lib/services/mockData';
+import { queueStore } from '@/lib/services/queueStore';
+import { MOCK_PRODUCTS } from '@/lib/services/mockData';
 import { calculateCartSummary } from '@/lib/engine/pricing';
 import { ScanProductResponse } from '@/types/api';
 import { CartItem } from '@/types/domain';
@@ -24,23 +25,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { barcode, quantity } = validation.data;
+    const { session_id, barcode, quantity } = validation.data;
+
+    // Fetch live session from stateful store
+    const sessionData = queueStore.getSessionById(session_id);
+    if (!sessionData) {
+      return NextResponse.json<ScanProductResponse>(
+        {
+          success: false,
+          error: {
+            code: 'SESSION_NOT_FOUND',
+            message: `Session '${session_id}' not found.`,
+          },
+        },
+        { status: 404 }
+      );
+    }
 
     // Verify session status is 'SHOPPING' (cannot scan if ASSIGNED_LOCKED or at checkout)
-    if (MOCK_ACTIVE_SESSION.status !== 'SHOPPING') {
+    if (sessionData.status !== 'SHOPPING') {
       return NextResponse.json<ScanProductResponse>(
         {
           success: false,
           error: {
             code: 'SESSION_LOCKED',
-            message: `Cannot scan items while session status is '${MOCK_ACTIVE_SESSION.status}'. Cart is locked for checkout.`,
+            message: `Cannot scan items while session status is '${sessionData.status}'. Cart is locked for checkout.`,
           },
         },
         { status: 409 }
       );
     }
 
-    // Lookup product in database
+    // Lookup product in catalog
     const product = MOCK_PRODUCTS.find((p) => p.barcode === barcode && p.is_active);
     if (!product) {
       return NextResponse.json<ScanProductResponse>(
@@ -68,8 +84,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Snapshot item
-    const existingItems = [...(MOCK_ACTIVE_SESSION.items || [])];
+    // Snapshot item, update session
+    const existingItems = [...(sessionData.items || [])];
     const itemIndex = existingItems.findIndex((i) => i.product_id === product.id);
 
     let scannedItem: CartItem;
@@ -86,8 +102,8 @@ export async function POST(request: NextRequest) {
       existingItems[itemIndex] = scannedItem;
     } else {
       scannedItem = {
-        id: `i_${Date.now()}`,
-        session_id: validation.data.session_id,
+        id: `i_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+        session_id,
         product_id: product.id,
         quantity,
         unit_price_paise: product.price_paise,
@@ -108,23 +124,21 @@ export async function POST(request: NextRequest) {
         quantity: i.quantity,
         taxRateBasisPoints: i.tax_rate_basis_points,
       })),
-      MOCK_ACTIVE_SESSION.discount_paise
+      sessionData.discount_paise
     );
 
-    const updatedSession = {
-      ...MOCK_ACTIVE_SESSION,
+    const updatedSession = queueStore.updateSessionItems(session_id, existingItems, {
       total_items: calculation.totalItems,
       subtotal_paise: calculation.subtotalPaise,
       tax_paise: calculation.taxPaise,
+      discount_paise: calculation.discountPaise,
       grand_total_paise: calculation.grandTotalPaise,
-      items: existingItems,
-      updated_at: new Date().toISOString(),
-    };
+    });
 
     return NextResponse.json<ScanProductResponse>({
       success: true,
       data: {
-        session: updatedSession,
+        session: updatedSession!,
         scanned_item: scannedItem,
       },
       meta: {

@@ -1,6 +1,7 @@
 import React from 'react';
+import Link from 'next/link';
 import { BrandLogo } from '@/components/zerowait/BrandLogo';
-import { Store, GitBranch, ShieldCheck } from 'lucide-react';
+import { Store, GitBranch, ShoppingCart, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 
 export interface AppHeaderProps {
@@ -28,6 +29,24 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Module Nav */}
+        <nav className="hidden sm:flex items-center gap-1">
+          <Link
+            href="/cart"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[#7B8BA0] hover:text-[#0F2A43] hover:bg-[#EAF4FF] transition-colors"
+          >
+            <ShoppingCart className="w-3.5 h-3.5" />
+            Cart
+          </Link>
+          <Link
+            href="/queue"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[#7B8BA0] hover:text-[#0F2A43] hover:bg-[#EAF4FF] transition-colors"
+          >
+            <Users className="w-3.5 h-3.5" />
+            Queue
+          </Link>
+        </nav>
+
         {/* Branch Scope Indicator */}
         <div className="flex items-center gap-1.5 bg-[#E0F2FE] border border-[#BAE6FD] text-[#0369A1] px-3 py-1 rounded-full text-xs font-bold">
           <GitBranch className="w-3.5 h-3.5 text-[#4DB3E6]" />
