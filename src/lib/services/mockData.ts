@@ -83,6 +83,70 @@ export const MOCK_PRODUCTS: Product[] = [
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
+  {
+    id: 'e6666666-6666-6666-6666-666666666666',
+    store_id: MOCK_STORE_ID,
+    barcode: '8901030383128',
+    name: 'Organic Carrots (500g)',
+    category: 'Vegetables',
+    description: 'Sweet crunchy local organic carrots',
+    image_url: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=200&auto=format&fit=crop&q=60',
+    price_paise: 3500, // ₹35.00
+    tax_rate_basis_points: 500, // 5%
+    stock_quantity: 30,
+    unit: 'pack',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'e7777777-7777-7777-7777-777777777777',
+    store_id: MOCK_STORE_ID,
+    barcode: '8901030383129',
+    name: 'Orange Juice (1L)',
+    category: 'Beverages',
+    description: '100% pure squeezed Valencia oranges',
+    image_url: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=200&auto=format&fit=crop&q=60',
+    price_paise: 14000, // ₹140.00
+    tax_rate_basis_points: 1200, // 12%
+    stock_quantity: 25,
+    unit: 'bottle',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'e8888888-8888-8888-8888-888888888888',
+    store_id: MOCK_STORE_ID,
+    barcode: '8901030383130',
+    name: 'Cheddar Cheese (200g)',
+    category: 'Dairy & Eggs',
+    description: 'Aged block cheddar cheese',
+    image_url: 'https://images.unsplash.com/photo-1618164436241-4473940d1f5c?w=200&auto=format&fit=crop&q=60',
+    price_paise: 21000, // ₹210.00
+    tax_rate_basis_points: 1200, // 12%
+    stock_quantity: 8,
+    unit: 'block',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'e9999999-9999-9999-9999-999999999999',
+    store_id: MOCK_STORE_ID,
+    barcode: '8901030383131',
+    name: 'Toilet Paper (4 Rolls)',
+    category: 'Household',
+    description: '2-ply soft recycled embossed rolls',
+    image_url: 'https://images.unsplash.com/photo-1584556812952-905ffd0c611a?w=200&auto=format&fit=crop&q=60',
+    price_paise: 16000, // ₹160.00
+    tax_rate_basis_points: 1800, // 18%
+    stock_quantity: 100,
+    unit: 'pack',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
 ];
 
 export const MOCK_CARTS: Cart[] = [

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cartRetrievalSchema } from '@/lib/validations/cart';
-import { queueStore } from '@/lib/services/queueStore';
+import { getCartAndActiveSession } from '@/lib/services/cartService';
 import { CartRetrievalResponse } from '@/types/api';
 
 export async function GET(
@@ -25,15 +25,43 @@ export async function GET(
       );
     }
 
-    const cartResult = queueStore.getCartByQrCode(validation.data.qr_code);
+    const { cart, active_session, error, configMissing } = await getCartAndActiveSession(
+      validation.data.qr_code
+    );
 
-    if (!cartResult || !cartResult.cart) {
+    if (configMissing) {
+      return NextResponse.json<CartRetrievalResponse>(
+        {
+          success: false,
+          error: {
+            code: 'SUPABASE_NOT_CONFIGURED',
+            message: error || 'Database is not configured.',
+          },
+        },
+        { status: 503 }
+      );
+    }
+
+    if (error) {
+      return NextResponse.json<CartRetrievalResponse>(
+        {
+          success: false,
+          error: {
+            code: 'DATABASE_ERROR',
+            message: error,
+          },
+        },
+        { status: 500 }
+      );
+    }
+
+    if (!cart) {
       return NextResponse.json<CartRetrievalResponse>(
         {
           success: false,
           error: {
             code: 'CART_NOT_FOUND',
-            message: `Physical cart with QR code '${validation.data.qr_code}' does not exist or is inactive.`,
+            message: `Physical cart with QR code '${validation.data.qr_code}' does not exist or is inactive in Supabase. Provision it via the provisioning tool.`,
           },
         },
         { status: 404 }
@@ -43,8 +71,8 @@ export async function GET(
     return NextResponse.json<CartRetrievalResponse>({
       success: true,
       data: {
-        cart: cartResult.cart,
-        active_session: cartResult.active_session,
+        cart,
+        active_session,
       },
       meta: {
         timestamp: new Date().toISOString(),

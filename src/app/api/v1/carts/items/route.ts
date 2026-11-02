@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateCartItemSchema } from '@/lib/validations/cart';
-import { queueStore } from '@/lib/services/queueStore';
-import { calculateCartSummary } from '@/lib/engine/pricing';
+import { updateCartItemQuantity } from '@/lib/services/cartService';
 import { UpdateCartItemResponse } from '@/types/api';
-import { CartItem } from '@/types/domain';
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -26,89 +24,37 @@ export async function PATCH(request: NextRequest) {
 
     const { session_id, item_id, quantity } = validation.data;
 
-    const sessionData = queueStore.getSessionById(session_id);
-    if (!sessionData) {
+    const result = await updateCartItemQuantity(session_id, item_id, quantity);
+
+    if (!result.success || !result.session) {
+      const statusCode =
+        result.error?.code === 'SESSION_NOT_FOUND'
+          ? 404
+          : result.error?.code === 'ITEM_NOT_FOUND'
+          ? 404
+          : result.error?.code === 'SESSION_LOCKED'
+          ? 409
+          : result.error?.code === 'SUPABASE_NOT_CONFIGURED'
+          ? 503
+          : 500;
+
       return NextResponse.json<UpdateCartItemResponse>(
         {
           success: false,
           error: {
-            code: 'SESSION_NOT_FOUND',
-            message: `Session '${session_id}' not found.`,
+            code: result.error?.code || 'UPDATE_FAILED',
+            message: result.error?.message || 'Failed to update item quantity.',
           },
         },
-        { status: 404 }
+        { status: statusCode }
       );
     }
-
-    // Verify session status is 'SHOPPING'
-    if (sessionData.status !== 'SHOPPING') {
-      return NextResponse.json<UpdateCartItemResponse>(
-        {
-          success: false,
-          error: {
-            code: 'SESSION_LOCKED',
-            message: `Cannot modify cart items while status is '${sessionData.status}'.`,
-          },
-        },
-        { status: 409 }
-      );
-    }
-
-    const existingItems = [...(sessionData.items || [])];
-    const itemIndex = existingItems.findIndex((i) => i.id === item_id);
-
-    if (itemIndex === -1) {
-      return NextResponse.json<UpdateCartItemResponse>(
-        {
-          success: false,
-          error: {
-            code: 'ITEM_NOT_FOUND',
-            message: `Cart item ${item_id} not found in this session.`,
-          },
-        },
-        { status: 404 }
-      );
-    }
-
-    let updatedItem: CartItem | null = null;
-
-    if (quantity === 0) {
-      // Remove item
-      existingItems.splice(itemIndex, 1);
-    } else {
-      const target = existingItems[itemIndex];
-      updatedItem = {
-        ...target,
-        quantity,
-        total_price_paise: target.unit_price_paise * quantity,
-        updated_at: new Date().toISOString(),
-      };
-      existingItems[itemIndex] = updatedItem;
-    }
-
-    // Server-side recalculation
-    const calculation = calculateCartSummary(
-      existingItems.map((i) => ({
-        unitPricePaise: i.unit_price_paise,
-        quantity: i.quantity,
-        taxRateBasisPoints: i.tax_rate_basis_points,
-      })),
-      sessionData.discount_paise
-    );
-
-    const updatedSession = queueStore.updateSessionItems(session_id, existingItems, {
-      total_items: calculation.totalItems,
-      subtotal_paise: calculation.subtotalPaise,
-      tax_paise: calculation.taxPaise,
-      discount_paise: calculation.discountPaise,
-      grand_total_paise: calculation.grandTotalPaise,
-    });
 
     return NextResponse.json<UpdateCartItemResponse>({
       success: true,
       data: {
-        session: updatedSession!,
-        updated_item: updatedItem,
+        session: result.session,
+        updated_item: result.updated_item ?? null,
       },
       meta: {
         timestamp: new Date().toISOString(),

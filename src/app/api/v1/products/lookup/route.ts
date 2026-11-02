@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { productLookupSchema } from '@/lib/validations/cart';
-import { MOCK_PRODUCTS } from '@/lib/services/mockData';
+import { lookupProductByBarcode } from '@/lib/services/productService';
 import { formatPaiseToInr } from '@/lib/engine/pricing';
 import { ProductLookupResponse } from '@/types/api';
 
@@ -25,11 +25,36 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // In production with live Supabase, we query Supabase with RLS / server client
-    // Fallback gracefully to seed mock catalog
-    const product = MOCK_PRODUCTS.find(
-      (p) => p.barcode === validation.data.barcode && p.is_active
+    const { product, error, configMissing } = await lookupProductByBarcode(
+      validation.data.barcode,
+      validation.data.store_id
     );
+
+    if (configMissing) {
+      return NextResponse.json<ProductLookupResponse>(
+        {
+          success: false,
+          error: {
+            code: 'SUPABASE_NOT_CONFIGURED',
+            message: error || 'Database is not configured.',
+          },
+        },
+        { status: 503 }
+      );
+    }
+
+    if (error) {
+      return NextResponse.json<ProductLookupResponse>(
+        {
+          success: false,
+          error: {
+            code: 'DATABASE_ERROR',
+            message: error,
+          },
+        },
+        { status: 500 }
+      );
+    }
 
     if (!product) {
       return NextResponse.json<ProductLookupResponse>(
@@ -37,7 +62,7 @@ export async function GET(request: NextRequest) {
           success: false,
           error: {
             code: 'PRODUCT_NOT_FOUND',
-            message: `No active product found for barcode: ${validation.data.barcode}`,
+            message: `No active product found for barcode: ${validation.data.barcode}. Use the product registration or CSV import tool to register it.`,
           },
         },
         { status: 404 }

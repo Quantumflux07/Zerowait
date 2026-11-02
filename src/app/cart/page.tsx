@@ -55,13 +55,14 @@ export default function CartPage() {
     scanMessage,
     error,
     loadCart,
+    leaveCart,
     scanBarcode,
     updateItemQuantity,
   } = useCartSession();
 
   const handleLeaveCart = useCallback(() => {
-    window.location.reload();
-  }, []);
+    leaveCart();
+  }, [leaveCart]);
 
   // ── Landing ───────────────────────────────────────────────────────────────────
   if (!cart || !session) {

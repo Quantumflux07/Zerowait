@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { laneWorkloadSchema } from '@/lib/validations/queue';
-import { queueStore } from '@/lib/services/queueStore';
+import { getLanesWithWorkload } from '@/lib/services/queueService';
 import { LaneWorkloadResponse } from '@/types/api';
 
 export async function GET(request: NextRequest) {
@@ -23,27 +23,45 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const rawLanes = queueStore.getLanes();
+    const result = await getLanesWithWorkload(validation.data.store_id);
 
-    const lanesWithWorkload = rawLanes.map((l) => ({
-      ...l,
-      queue_count: l.current_queue_count ?? (l.queued_carts?.length || 0),
-      estimated_wait_seconds: l.estimated_wait_seconds || 0,
-      serving_token: l.serving_token || null,
-    }));
+    if (result.configMissing) {
+      return NextResponse.json<LaneWorkloadResponse>(
+        {
+          success: false,
+          error: {
+            code: 'SUPABASE_NOT_CONFIGURED',
+            message: result.error || 'Database is not configured.',
+          },
+        },
+        { status: 503 }
+      );
+    }
 
-    const totalActiveLanes = lanesWithWorkload.filter((l) => l.status === 'OPEN').length;
-    const totalWaitingCustomers = lanesWithWorkload.reduce(
-      (sum, l) => sum + l.queue_count,
-      0
-    );
+    if (result.error) {
+      return NextResponse.json<LaneWorkloadResponse>(
+        {
+          success: false,
+          error: {
+            code: 'DATABASE_ERROR',
+            message: result.error,
+          },
+        },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json<LaneWorkloadResponse>({
       success: true,
       data: {
-        lanes: lanesWithWorkload,
-        total_active_lanes: totalActiveLanes,
-        total_waiting_customers: totalWaitingCustomers,
+        lanes: result.lanes.map((l) => ({
+          ...l,
+          queue_count: l.current_queue_count ?? (l.queued_carts?.length || 0),
+          estimated_wait_seconds: l.estimated_wait_seconds || 0,
+          serving_token: l.serving_token || null,
+        })),
+        total_active_lanes: result.total_active_lanes,
+        total_waiting_customers: result.total_waiting_customers,
       },
       meta: {
         timestamp: new Date().toISOString(),
