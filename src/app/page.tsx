@@ -76,16 +76,16 @@ export default function RootPage() {
             </div>
 
             <div className="pt-2">
-              <Button
-                variant="primary"
-                size="md"
-                fullWidth
-                disabled
-                className="opacity-90 cursor-default"
-                icon={<ArrowRight className="w-4 h-4" />}
-              >
-                Managed in cart branch
-              </Button>
+              <Link href="/cart" className="block w-full">
+                <Button
+                  variant="primary"
+                  size="md"
+                  fullWidth
+                  icon={<ArrowRight className="w-4 h-4" />}
+                >
+                  Launch Cart Interface
+                </Button>
+              </Link>
             </div>
           </Card>
 

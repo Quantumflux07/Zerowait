@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateCartItemSchema } from '@/lib/validations/cart';
-import { MOCK_ACTIVE_SESSION } from '@/lib/services/mockData';
+import { queueStore } from '@/lib/services/queueStore';
 import { calculateCartSummary } from '@/lib/engine/pricing';
 import { UpdateCartItemResponse } from '@/types/api';
 import { CartItem } from '@/types/domain';
@@ -24,23 +24,37 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const { item_id, quantity } = validation.data;
+    const { session_id, item_id, quantity } = validation.data;
+
+    const sessionData = queueStore.getSessionById(session_id);
+    if (!sessionData) {
+      return NextResponse.json<UpdateCartItemResponse>(
+        {
+          success: false,
+          error: {
+            code: 'SESSION_NOT_FOUND',
+            message: `Session '${session_id}' not found.`,
+          },
+        },
+        { status: 404 }
+      );
+    }
 
     // Verify session status is 'SHOPPING'
-    if (MOCK_ACTIVE_SESSION.status !== 'SHOPPING') {
+    if (sessionData.status !== 'SHOPPING') {
       return NextResponse.json<UpdateCartItemResponse>(
         {
           success: false,
           error: {
             code: 'SESSION_LOCKED',
-            message: `Cannot modify cart items while status is '${MOCK_ACTIVE_SESSION.status}'.`,
+            message: `Cannot modify cart items while status is '${sessionData.status}'.`,
           },
         },
         { status: 409 }
       );
     }
 
-    const existingItems = [...(MOCK_ACTIVE_SESSION.items || [])];
+    const existingItems = [...(sessionData.items || [])];
     const itemIndex = existingItems.findIndex((i) => i.id === item_id);
 
     if (itemIndex === -1) {
@@ -62,7 +76,6 @@ export async function PATCH(request: NextRequest) {
       // Remove item
       existingItems.splice(itemIndex, 1);
     } else {
-      // Update quantity and line total
       const target = existingItems[itemIndex];
       updatedItem = {
         ...target,
@@ -80,23 +93,21 @@ export async function PATCH(request: NextRequest) {
         quantity: i.quantity,
         taxRateBasisPoints: i.tax_rate_basis_points,
       })),
-      MOCK_ACTIVE_SESSION.discount_paise
+      sessionData.discount_paise
     );
 
-    const updatedSession = {
-      ...MOCK_ACTIVE_SESSION,
+    const updatedSession = queueStore.updateSessionItems(session_id, existingItems, {
       total_items: calculation.totalItems,
       subtotal_paise: calculation.subtotalPaise,
       tax_paise: calculation.taxPaise,
+      discount_paise: calculation.discountPaise,
       grand_total_paise: calculation.grandTotalPaise,
-      items: existingItems,
-      updated_at: new Date().toISOString(),
-    };
+    });
 
     return NextResponse.json<UpdateCartItemResponse>({
       success: true,
       data: {
-        session: updatedSession,
+        session: updatedSession!,
         updated_item: updatedItem,
       },
       meta: {
