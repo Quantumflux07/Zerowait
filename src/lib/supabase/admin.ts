@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Database } from '@/types/database.types';
+import type { Database } from '../../types/database.types.ts';
 
 /**
  * Supermarket Admin / Service Role Supabase Client
@@ -8,7 +8,7 @@ import { Database } from '@/types/database.types';
  * - NEVER import or call this module in client components or browser execution context.
  * - Used exclusively by secure server endpoints (Queue Engine allocation, server price calculation).
  */
-export function createAdminClient() {
+export function createAdminClient(): any {
   if (typeof window !== 'undefined') {
     throw new Error('SECURITY VIOLATION: createAdminClient cannot be executed in browser context.');
   }
@@ -22,7 +22,7 @@ export function createAdminClient() {
     );
   }
 
-  return createClient<Database>(supabaseUrl, serviceRoleKey, {
+  return createClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

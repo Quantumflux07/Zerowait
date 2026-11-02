@@ -48,7 +48,13 @@ VALUES
     ('e6666666-6666-6666-6666-666666666666', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '8901030383128', 'Organic Carrots (500g)', 'Vegetables', 'Sweet crunchy local organic carrots', 3500, 500, 30, 'pack', true),
     ('e7777777-7777-7777-7777-777777777777', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '8901030383129', 'Orange Juice (1L)', 'Beverages', '100% pure squeezed Valencia oranges', 14000, 1200, 25, 'bottle', true),
     ('e8888888-8888-8888-8888-888888888888', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '8901030383130', 'Cheddar Cheese (200g)', 'Dairy & Eggs', 'Aged block cheddar cheese', 21000, 1200, 8, 'block', true),
-    ('e9999999-9999-9999-9999-999999999999', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '8901030383131', 'Toilet Paper (4 Rolls)', 'Household', '2-ply soft recycled embossed rolls', 16000, 1800, 100, 'pack', true)
+    ('e9999999-9999-9999-9999-999999999999', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '8901030383131', 'Toilet Paper (4 Rolls)', 'Household', '2-ply soft recycled embossed rolls', 16000, 1800, 100, 'pack', true),
+    ('ea111111-1111-1111-1111-111111111111', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '8901030383132', 'Basmati Rice (5kg)', 'Grains & Staples', '[DEV] Premium aged long grain basmati rice', 45000, 500, 50, 'bag', true),
+    ('ea222222-2222-2222-2222-222222222222', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '8901030383133', 'Olive Oil (1L)', 'Cooking Essentials', '[DEV] Cold pressed extra virgin olive oil', 95000, 500, 20, 'bottle', true),
+    ('ea333333-3333-3333-3333-333333333333', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '8901030383134', 'Instant Coffee (100g)', 'Beverages', '[DEV] Rich aroma roast blend coffee', 28000, 1800, 60, 'jar', true),
+    ('ea444444-4444-4444-4444-444444444444', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '8901030383135', 'Pure Honey (500g)', 'Breakfast', '[DEV] 100% natural wild forest honey', 32000, 500, 40, 'jar', true),
+    ('ea555555-5555-5555-5555-555555555555', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '8901030383136', 'Almonds (250g)', 'Dry Fruits & Nuts', '[DEV] California whole natural almonds', 29000, 500, 35, 'pack', true),
+    ('ea666666-6666-6666-6666-666666666666', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '8901030383137', 'Dark Chocolate (100g)', 'Snacks', '[DEV] 70% cocoa rich dark Belgian chocolate', 15000, 1800, 75, 'bar', true)
 ON CONFLICT (store_id, barcode) DO UPDATE SET
     price_paise = EXCLUDED.price_paise,
     stock_quantity = EXCLUDED.stock_quantity;

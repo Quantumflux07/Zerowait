@@ -223,9 +223,16 @@ export const QueueEngineView: React.FC = () => {
           const bc = new BroadcastChannel('zerowait_cart_sync');
           bc.postMessage({
             event: 'ASSIGNMENT_CONFIRMED',
+            type: 'LANE_ASSIGNED',
             sessionId: activeSession.id,
             cartId: currentCart?.id,
             qrCode: currentCart?.qr_code,
+            laneId: json.data.assignment.lane_id,
+            laneName: json.data.estimate?.lane_name || json.data.assignment.lane?.name || 'Counter',
+            laneType: json.data.estimate?.lane_type || json.data.assignment.lane?.type || 'REGULAR',
+            tokenNumber: json.data.assignment.token_number,
+            queuePosition: json.data.assignment.queue_position,
+            estimatedWaitSeconds: json.data.assignment.estimated_wait_seconds,
             assignment: json.data.assignment,
             estimate: json.data.estimate,
             timestamp: new Date().toISOString(),
