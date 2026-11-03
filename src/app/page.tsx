@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Clock,
   Layers,
+  CreditCard,
 } from 'lucide-react';
 
 export default function RootPage() {
@@ -39,7 +40,7 @@ export default function RootPage() {
         </div>
 
         {/* Primary Functional Modules Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
           {/* Module 1: Shopping Cart Interface */}
           <Card className="flex flex-col justify-between hover:shadow-card-hover transition-all duration-200 border-[#E2EDF8]">
             <div>
@@ -133,6 +134,55 @@ export default function RootPage() {
                   icon={<ArrowRight className="w-4 h-4" />}
                 >
                   Launch Queue Engine Station
+                </Button>
+              </Link>
+            </div>
+          </Card>
+
+          {/* Module 3: Cashier Counter Station */}
+          <Card className="flex flex-col justify-between hover:shadow-card-hover transition-all duration-200 border-[#E2EDF8]">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#4DB3E6]">
+                  <CreditCard className="w-6 h-6 stroke-[2.2]" />
+                </div>
+                <Badge variant="green" dot>Cashier Active</Badge>
+              </div>
+
+              <h2 className="text-xl font-bold text-[#0F2A43] mb-2">
+                Cashier Counter Station
+              </h2>
+
+              <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed mb-6">
+                Cashier checkout interface. Scans arriving cart QR codes, verifies lane allocations,
+                spot-checks item snapshots, prints tax invoices, and marks transactions as paid.
+              </p>
+
+              <div className="space-y-2 text-xs text-[#0F2A43] bg-[#F8FBFE] p-3.5 rounded-2xl border border-[#E2EDF8] mb-6">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981]" />
+                  <span>Cart QR & Lane Allocation Verification</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981]" />
+                  <span>Print-Friendly Official Tax Receipts</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981]" />
+                  <span>Atomic Checkout Settlement & Cart Release</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <Link href="/cashier" className="block w-full">
+                <Button
+                  variant="primary"
+                  size="md"
+                  fullWidth
+                  icon={<ArrowRight className="w-4 h-4" />}
+                >
+                  Launch Cashier Station
                 </Button>
               </Link>
             </div>

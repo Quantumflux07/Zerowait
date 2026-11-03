@@ -6,7 +6,7 @@
  * Integrates with Supabase when valid credentials exist, with robust fallback.
  */
 
-import type { Cart, CartSession, LaneAssignment, CartItem } from '../../types/domain.ts';
+import type { Cart, CartSession, LaneAssignment, CartItem, CheckoutTransaction, PaymentMethod } from '../../types/domain.ts';
 import {
   evaluateLanesForCart,
   generateTokenNumber,
@@ -35,6 +35,7 @@ class QueueStore {
   private cartIdToSessionId: Map<string, string> = new Map(); // key = cart.id -> active session id
   private lanes: Map<string, LaneWithQueueDetails> = new Map();
   private assignments: Map<string, LaneAssignment> = new Map(); // key = session.id -> assignment
+  private transactions: Map<string, CheckoutTransaction> = new Map(); // key = session.id -> transaction
   private assignmentSequence: number = 100;
 
   constructor() {
@@ -421,10 +422,10 @@ class QueueStore {
       guest_session_token: 'guest_tok_assigned',
       status: 'ASSIGNED_LOCKED',
       total_items: 3,
-      subtotal_paise: 27000,
+      subtotal_paise: 31000,
       discount_paise: 0,
-      tax_paise: 1350,
-      grand_total_paise: 28350,
+      tax_paise: 1550,
+      grand_total_paise: 32550,
       assigned_lane_id: 'd1111111-1111-1111-1111-111111111111',
       locked_at: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
       started_at: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
@@ -460,6 +461,22 @@ class QueueStore {
   private registerSession(session: CartSession) {
     this.sessions.set(session.id, session);
     this.cartIdToSessionId.set(session.cart_id, session.id);
+  }
+
+  /**
+   * Looks up an existing registered cart by QR code or ID without dynamic auto-provisioning.
+   * Used by Cashier Station to prevent ghost carts.
+   */
+  public getExistingCartByQrCode(rawCode: string): CartWithSession | null {
+    const code = rawCode.trim().toUpperCase();
+    const cart = Array.from(this.carts.values()).find(
+      (c) =>
+        c.qr_code.toUpperCase() === code ||
+        c.id.toLowerCase() === rawCode.trim().toLowerCase() ||
+        c.cart_label.toUpperCase() === code
+    );
+    if (!cart) return null;
+    return this.getCartByQrCode(cart.qr_code);
   }
 
   /**
@@ -831,6 +848,131 @@ class QueueStore {
     session.updated_at = new Date().toISOString();
 
     return { ...session };
+  }
+
+  /**
+   * Returns assignment for a session if exists
+   */
+  public getAssignmentBySessionId(sessionId: string): LaneAssignment | undefined {
+    return this.assignments.get(sessionId);
+  }
+
+  /**
+   * Returns completed transaction for a session if exists
+   */
+  public getTransactionBySessionId(sessionId: string): CheckoutTransaction | undefined {
+    return this.transactions.get(sessionId);
+  }
+
+  /**
+   * Cashier counter checkin: moves session to AT_CHECKOUT and assignment to SERVING.
+   */
+  public checkinSession(sessionId: string, laneId: string): boolean {
+    const session = this.sessions.get(sessionId);
+    if (!session) return false;
+    if (session.status !== 'ASSIGNED_LOCKED' && session.status !== 'AT_CHECKOUT') return false;
+
+    session.status = 'AT_CHECKOUT';
+    session.updated_at = new Date().toISOString();
+
+    const assignment = this.assignments.get(sessionId);
+    if (assignment) {
+      assignment.assignment_status = 'SERVING';
+      assignment.called_at = assignment.called_at || new Date().toISOString();
+      assignment.updated_at = new Date().toISOString();
+    }
+    return true;
+  }
+
+  /**
+   * Cashier settlement: records transaction, marks session as PAID and assignment as COMPLETED.
+   */
+  public settleSession(
+    sessionId: string,
+    cashierId: string,
+    paymentMethod: PaymentMethod,
+    paymentReference?: string,
+    amountPaise?: number
+  ): { success: boolean; transaction?: CheckoutTransaction; error?: string } {
+    const session = this.sessions.get(sessionId);
+    if (!session) return { success: false, error: 'Session not found' };
+
+    if (session.status === 'PAID' || session.status === 'CLOSED') {
+      const existing = this.transactions.get(sessionId);
+      if (existing) return { success: true, transaction: existing };
+    }
+
+    if (
+      session.status !== 'ASSIGNED_LOCKED' &&
+      session.status !== 'AT_CHECKOUT' &&
+      session.status !== 'PAYMENT_PENDING'
+    ) {
+      return { success: false, error: `Invalid status: ${session.status}` };
+    }
+
+    const payableAmount = amountPaise !== undefined ? amountPaise : session.grand_total_paise;
+    if (amountPaise !== undefined && amountPaise !== session.grand_total_paise) {
+      return {
+        success: false,
+        error: `Amount mismatch: expected ${session.grand_total_paise}, got ${amountPaise}`,
+      };
+    }
+
+    const d = new Date();
+    const invoiceNumber = `INV-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(
+      d.getDate()
+    ).padStart(2, '0')}-${Math.floor(100000 + Math.random() * 900000)}`;
+    const now = d.toISOString();
+
+    const tx: CheckoutTransaction = {
+      id: `tx_${Date.now()}`,
+      store_id: session.store_id,
+      session_id: sessionId,
+      payment_method: paymentMethod,
+      payment_reference: paymentReference || null,
+      amount_paise: payableAmount,
+      status: 'COMPLETED',
+      invoice_number: invoiceNumber,
+      payment_gateway_response: { settled_by_cashier_id: cashierId },
+      completed_at: now,
+      created_at: now,
+    };
+
+    this.transactions.set(sessionId, tx);
+    session.status = 'PAID';
+    session.ended_at = now;
+    session.updated_at = now;
+
+    const assignment = this.assignments.get(sessionId);
+    if (assignment) {
+      assignment.assignment_status = 'COMPLETED';
+      assignment.served_at = now;
+      assignment.updated_at = now;
+    }
+
+    // Update lane queue count in in-memory state
+    if (session.assigned_lane_id) {
+      const lane = this.lanes.get(session.assigned_lane_id);
+      if (lane && lane.queued_carts) {
+        lane.queued_carts = lane.queued_carts.filter((qc) => qc.sessionId !== sessionId);
+        lane.current_queue_count = lane.queued_carts.length;
+      }
+    }
+
+    return { success: true, transaction: tx };
+  }
+
+  /**
+   * Cashier cart release: marks session as CLOSED, freeing the physical cart for a new customer.
+   */
+  public releaseSession(sessionId: string): boolean {
+    const session = this.sessions.get(sessionId);
+    if (!session) return false;
+    session.status = 'CLOSED';
+    session.updated_at = new Date().toISOString();
+    this.cartIdToSessionId.delete(session.cart_id);
+    this.assignments.delete(sessionId);
+    return true;
   }
 }
 

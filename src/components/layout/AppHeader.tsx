@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { BrandLogo } from '@/components/zerowait/BrandLogo';
-import { Store, GitBranch, ShoppingCart, Users } from 'lucide-react';
+import { Store, GitBranch, ShoppingCart, Users, CreditCard } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 
 export interface AppHeaderProps {
@@ -44,6 +44,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           >
             <Users className="w-3.5 h-3.5" />
             Queue
+          </Link>
+          <Link
+            href="/cashier"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[#7B8BA0] hover:text-[#0F2A43] hover:bg-[#EAF4FF] transition-colors"
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+            Cashier
           </Link>
         </nav>
 
