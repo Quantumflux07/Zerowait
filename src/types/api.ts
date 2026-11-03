@@ -160,3 +160,63 @@ export type CheckoutStateUpdateResponse = ApiResponse<{
   new_status: CartStatus;
   invoice_number?: string;
 }>;
+
+
+// -----------------------------------------------------------------------------
+// 9. Cashier Module Contracts
+// -----------------------------------------------------------------------------
+export interface CashierCartDetails {
+  cart: Cart;
+  session: CartSession;
+  assignment: LaneAssignment | null;
+  items: CartItem[];
+  authoritative_bill: {
+    total_items: number;
+    subtotal_paise: number;
+    tax_paise: number;
+    discount_paise: number;
+    grand_total_paise: number;
+  };
+  lane_mismatch: boolean;
+  lane_mismatch_message?: string;
+}
+
+export type CashierCartValidationResponse = ApiResponse<CashierCartDetails>;
+
+export interface CashierCheckinRequest {
+  session_id: string;
+  lane_id: string;
+}
+
+export type CashierCheckinResponse = ApiResponse<{
+  session_id: string;
+  status: CartStatus;
+}>;
+
+export interface CashierSettleRequest {
+  session_id: string;
+  payment_method: PaymentMethod;
+  payment_reference?: string;
+  amount_paise: number;
+  cashier_lane_id?: string;
+}
+
+export type CashierSettleResponse = ApiResponse<{
+  transaction_id: string;
+  invoice_number: string;
+  amount_paise: number;
+  payment_method: PaymentMethod;
+  status: string;
+  completed_at: string;
+  already_settled?: boolean;
+}>;
+
+export interface CashierReleaseRequest {
+  session_id: string;
+}
+
+export type CashierReleaseResponse = ApiResponse<{
+  session_id: string;
+  cart_id: string;
+  status: CartStatus;
+}>;
