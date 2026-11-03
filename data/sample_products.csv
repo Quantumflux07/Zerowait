@@ -1,0 +1,16 @@
+barcode,name,category,price_paise,tax_rate_basis_points,stock_quantity,unit,description
+8901030383123,Fresh Milk (1L),Dairy & Eggs,6500,500,120,bottle,[DEV] Pasteurized homogenized full cream milk
+8901030383124,Red Apples (1kg),Fruits,18000,500,15,kg,[DEV] Crisp fresh Royal Gala apples
+8901030383125,Bananas (1 Dozen),Fruits,6000,500,45,dozen,[DEV] Farm fresh Robusta bananas
+8901030383126,Dishwashing Liquid (500ml),Household,11500,1800,200,bottle,[DEV] Lemon degreasing formula
+8901030383127,Whole Wheat Bread (400g),Bakery,4500,500,10,loaf,[DEV] 100% whole grain brown bread
+8901030383128,Organic Carrots (500g),Vegetables,3500,500,30,pack,[DEV] Sweet crunchy local organic carrots
+8901030383129,Orange Juice (1L),Beverages,14000,1200,25,bottle,[DEV] 100% pure squeezed Valencia oranges
+8901030383130,Cheddar Cheese (200g),Dairy & Eggs,21000,1200,8,block,[DEV] Aged block cheddar cheese
+8901030383131,Toilet Paper (4 Rolls),Household,16000,1800,100,pack,[DEV] 2-ply soft recycled embossed rolls
+8901030383132,Basmati Rice (5kg),Grains & Staples,45000,500,50,bag,[DEV] Premium aged long grain basmati rice
+8901030383133,Olive Oil (1L),Cooking Essentials,95000,500,20,bottle,[DEV] Cold pressed extra virgin olive oil
+8901030383134,Instant Coffee (100g),Beverages,28000,1800,60,jar,[DEV] Rich aroma roast blend coffee
+8901030383135,Pure Honey (500g),Breakfast,32000,500,40,jar,[DEV] 100% natural wild forest honey
+8901030383136,Almonds (250g),Dry Fruits & Nuts,29000,500,35,pack,[DEV] California whole natural almonds
+8901030383137,Dark Chocolate (100g),Snacks,15000,1800,75,bar,[DEV] 70% cocoa rich dark Belgian chocolate
